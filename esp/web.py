@@ -1,19 +1,20 @@
-from flask import Flask, render_template, request
+from microdot import Microdot, htmlify
 
-app = Flask(__name__)
+app = Microdot()
 
 @app.route('/')
-def index():
-    return render_template('index.html')
+def index(request):
+    return htmlify('index.html')
 
 @app.route('/submit', methods=['POST'])
-def submit():
-    if request.method == 'POST':
-        ssid = request.form['ssid']
-        password = request.form['password']
-        email = request.form['email']
-        # Her kan du gøre noget med de indtastede værdier, som f.eks. gemme dem i en database eller udføre en handling med dem
-        return f'Du har indtastet SSID: {ssid}, password: {password}, email: {email}'
+def submit(request):
+    ssid = request.form.get('ssid')
+    password = request.form.get('password')
+    email = request.form.get('email')
+
+    # Gør noget med de indtastede værdier, f.eks. gem i en database
+
+    return f'Du har indtastet SSID: {ssid}, password: {password}, email: {email}'
 
 if __name__ == '__main__':
     app.run(debug=True)
