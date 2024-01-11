@@ -1,10 +1,10 @@
-from microdot import Microdot, htmlify
+from microdot import Microdot
 
 app = Microdot()
 
 @app.route('/')
 def index(request):
-    return htmlify('index.html')
+    return app.send_static_file('index.html')
 
 @app.route('/submit', methods=['POST'])
 def submit(request):
