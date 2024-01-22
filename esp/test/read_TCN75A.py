@@ -31,5 +31,5 @@ while True:
         ("Temperature in Celsius is: %.2f C, %.2f C" % (temp, temp2)), abs(temp - temp2)
     )
 
-    # Wait for 0.1 seconds before reading the data again
-    time.sleep(0.05)
+    # Wait for 1 seconds before reading the data again
+    time.sleep(1)
