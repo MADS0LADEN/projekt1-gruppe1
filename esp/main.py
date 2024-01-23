@@ -1,22 +1,175 @@
-import socket
+import asyncio
 
-# Server details
-server_ip = "127.0.0.1"  # Replace with the actual server IP address
-server_port = 7913  # Replace with the actual server port
+import network
+from microdot import Microdot
+from sensor import *
+from sensor import Alarm, Sensor
 
-# Create a TCP socket
-client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+mac = ""
 
-# Connect to the server
-client_socket.connect((server_ip, server_port))
 
-# Send data to the server
-data = "ALARM\nLækage i kølerummet!"
-client_socket.send(data.encode())
+def reset_wifi_mode():
+    try:
+        ap = network.WLAN(network.AP_IF)
+        mac = "".join(["%02x" % b for b in ap.config("mac")])
+        ap.config(ssid=f"Lækagealarm-{mac[-4:]}")
+        ap.config(max_clients=1)
+        client = network.WLAN(network.STA_IF)
+    except OSError as e:
+        if str(e) == "Wifi Invalid Mode":
+            print("Resetting WiFi mode...")
+            network.WLAN(network.AP_IF).active(False)
+            network.WLAN(network.STA_IF).active(False)
+            ap = network.WLAN(network.AP_IF)
+            client = network.WLAN(network.STA_IF)
+        else:
+            raise e
+    return ap, client
 
-# Receive data from the server
-received_data = client_socket.recv(1024).decode()
-print("Received:", received_data)
 
-# Close the connection
-client_socket.close()
+ap, client = reset_wifi_mode()
+
+app = Microdot()
+
+CREDENTIALS_FILE = "wifi.conf"
+
+
+def activateAP():
+    if not ap.active():
+        if client.active():
+            print("Turning client off")
+            client.active(0)
+        print("Turning AP on", ap.ifconfig()[0])
+        ap.active(1)
+        return True
+    else:
+        return False
+
+
+async def connectToWIFI(ssid, passw):
+    if ap.active():
+        print("Turning AP off")
+        ap.active(False)
+    if client.isconnected():
+        print("Disconnecting from current wifi")
+        client.disconnect()
+    client.active(1)
+    if not client.isconnected():
+        try:
+            client.config(dhcp_hostname="AWS")
+            client.connect(ssid, passw)
+        except Exception:
+            client.active(False)
+            return False
+        n = 0
+        print(f"Connecting to {ssid}", end="")
+        while not client.isconnected():
+            print(".", end="")
+            await asyncio.sleep(1)
+            n += 1
+            if n == 60:
+                break
+        if n == 60:
+            client.active(False)
+            print("\nGiving up! Not connected!")
+            raise ConnectionFailed
+        else:
+            print("\nNow connected with IP: ", client.ifconfig()[0])
+            return True
+
+
+@app.route("/")
+async def index(request):
+    print(f"Connection from {request.client_addr}")
+    try:
+        with open("web/setup.html", "r") as f:
+            html_content = f.read()
+    except IOError:
+        print("Error: File not found or read error")
+        html_content = "<h1>Error: File not found or read error</h1>"
+    return html_content, {"Content-Type": "text/html"}
+
+
+@app.route("/submit", methods=["POST"])
+async def submit(request):
+    ssid = request.form.get("ssid")
+    password = request.form.get("password")
+    email = request.form.get("email")
+    asyncio.create_task(disconnectAndConnect(ssid, password))
+    try:
+        with open("web/success.html", "r") as f:
+            html_content = f.read()
+    except IOError:
+        print("Error: File not found or read error")
+        html_content = "<h1>Error: File not found or read error</h1>"
+    save_credentials(ssid, password, email)
+    return html_content, {"Content-Type": "text/html"}
+
+
+class ConnectionFailed(Exception):
+    pass
+
+
+async def disconnectAndConnect(ssid, password):
+    await asyncio.sleep(1)
+    if client.isconnected():
+        client.disconnect()  # Disconnect from the current network
+    try:
+        await connectToWIFI(ssid, password)
+    except ConnectionFailed:
+        print("Failed to connect to new network. Turning on AP.")
+        activateAP()
+    except Exception as e:
+        print(f"An unexpected error occurred: {e}")
+
+
+def save_credentials(ssid, password, email):
+    with open(CREDENTIALS_FILE, "w") as f:
+        f.write(f"{ssid}\n")
+        f.write(f"{password}\n")
+        f.write(f"{email}\n")
+
+
+def load_wifi_credentials():
+    try:
+        with open(CREDENTIALS_FILE, "r") as f:
+            ssid = f.readline().strip()
+            password = f.readline().strip()
+            return ssid, password
+    except OSError:
+        print("No wifi.conf file found.")
+        return None, None
+
+
+sensor = Sensor()
+alarm = Alarm(sensor)
+
+
+async def read_sensor():
+    while True:
+        readings = sensor.read()
+        print(alarm.check(*readings), sensor.diff())
+        await asyncio.sleep(1)
+
+
+def run():
+    try:
+        ssid, password = load_wifi_credentials()
+        if ssid and password:
+            print("Trying to connect with saved credentials...")
+            asyncio.run(disconnectAndConnect(ssid, password))
+        else:
+            activateAP()
+
+        asyncio.create_task(read_sensor())
+        app.run(port=80)
+    except KeyboardInterrupt:
+        print("\nStopped...")
+    finally:
+        ap.active(0)
+        client.active(0)
+
+
+if __name__ == "__main__":
+    run()
+
