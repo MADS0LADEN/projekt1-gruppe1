@@ -2,7 +2,7 @@ import smtplib
 import socket
 
 # TCP server configuration
-HOST = "localhost"
+HOST = "0.0.0.0"
 PORT = 7913
 
 # Email configuration
@@ -10,10 +10,9 @@ SMTP_SERVER = "smtp.example.com"
 SMTP_PORT = 587
 SENDER_EMAIL = "sender@example.com"
 SENDER_PASSWORD = "password"
-RECIPIENT_EMAIL = "recipient@example.com"
 
 
-def send_email(subject, message):
+def send_email(reciever):
     server = None
     try:
         # Connect to the SMTP server
@@ -22,10 +21,10 @@ def send_email(subject, message):
         server.login(SENDER_EMAIL, SENDER_PASSWORD)
 
         # Compose the email
-        email = f"Subject: {subject}\n\n{message}"
+        email = "Alarm, der er vandspild."
 
         # Send the email
-        server.sendmail(SENDER_EMAIL, RECIPIENT_EMAIL, email)
+        server.sendmail(SENDER_EMAIL, reciever, email)
         print("Email sent successfully!")
 
     except Exception as e:
@@ -41,13 +40,9 @@ def handle_request(client_socket):
     data = client_socket.recv(1024).decode()
 
     # Process the request
-    subject, message = data.split("\n", 1)
+    email = data
     # send_email(subject, message)
-    print(subject, message)
-
-    # Send response to the client
-    response = "Email sent successfully!"
-    client_socket.send(response.encode())
+    print(email)
 
     # Close the client socket
     client_socket.close()

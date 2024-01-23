@@ -1,8 +1,8 @@
 import asyncio
+import socket
 
 import network
 from microdot import Microdot
-from sensor import *
 from sensor import Alarm, Sensor
 
 mac = ""
@@ -113,7 +113,7 @@ class ConnectionFailed(Exception):
 async def disconnectAndConnect(ssid, password):
     await asyncio.sleep(1)
     if client.isconnected():
-        client.disconnect()  # Disconnect from the current network
+        client.disconnect()
     try:
         await connectToWIFI(ssid, password)
     except ConnectionFailed:
@@ -141,14 +141,44 @@ def load_wifi_credentials():
         return None, None
 
 
+def load_email():
+    try:
+        with open(CREDENTIALS_FILE, "r") as f:
+            for i, line in enumerate(f):
+                if i == 2:
+                    email = line.strip()
+                    break
+            return email
+    except OSError:
+        print("No wifi.conf file found.")
+        return None
+
+
 sensor = Sensor()
 alarm = Alarm(sensor)
 
 
+def sendAlarm():
+    try:
+        s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        s.connect(("79.171.148.171", 7913))
+        message = str(load_email())
+        s.sendall(message.encode())
+        s.close()
+    except Exception as e:
+        print(f"Failed to send alarm: {e}")
+
+
 async def read_sensor():
+    run = 0
     while True:
         readings = sensor.read()
-        print(alarm.check(*readings), sensor.diff())
+        # print(alarm.check(*readings), sensor.diff())
+        if alarm.check(*readings):
+            pass
+        if not run:
+            sendAlarm()
+            run = 1
         await asyncio.sleep(1)
 
 
@@ -172,4 +202,3 @@ def run():
 
 if __name__ == "__main__":
     run()
-

@@ -53,6 +53,8 @@ class Alarm:
                 self.total_time += time.time() - self.start_time
                 self.start_time = time.time()
             if self.total_time >= 3600:
+                self.total_time = 0
+                self.start_time = None
                 return True
         else:
             self.start_time = None
