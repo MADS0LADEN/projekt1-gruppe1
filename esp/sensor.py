@@ -41,15 +41,22 @@ class Sensor:
 class Alarm:
     def __init__(self, sensor):
         self.sensor = sensor
+        self.start_time = None
+        self.total_time = 0
 
     def check(self, reading1, reading2):
         diff = abs(reading1 - reading2)
-        if diff < 1:
-            return False
-        elif 5 < diff > 1:
-            return True
+        if 4 <= diff <= 5:
+            if self.start_time is None:
+                self.start_time = time.time()
+            else:
+                self.total_time += time.time() - self.start_time
+                self.start_time = time.time()
+            if self.total_time >= 3600:
+                return True
         else:
-            return False
+            self.start_time = None
+        return False
 
 
 if __name__ == "__main__":
