@@ -8,6 +8,7 @@ dir_path = os.path.dirname(os.path.realpath(__file__))
 file_path = os.path.join(dir_path, "log.txt")
 
 # Read and process data
+# Read and process data
 csv_data = []
 with open(file_path, "r") as file:
     for line in file:
@@ -21,9 +22,7 @@ with open(file_path, "r") as file:
         values_str = "".join(values)  # Convert list to string without any separator
         values = values_str.replace("'", "")
         end = f"{timestamp},{values.replace(' ', '')}"
-        # print(end)
-        # values = list(values)  # Convert string list to actual list
-        csv_data.append(end)  # Include timestamp
+        csv_data.append(end.split(","))  # Split the string into a list using comma as separator
 
 # Write to CSV
 with open("output.csv", "w", newline="") as f:
