@@ -6,10 +6,10 @@ HOST = "0.0.0.0"
 PORT = 7913
 
 # Email configuration
-SMTP_SERVER = "smtp.mailgun.org"
+SMTP_SERVER = "smtp.gmail.com"
 SMTP_PORT = 587
-SENDER_EMAIL = "vandspild@sandbox9fc5740a653944b3a9b59254e197d737.mailgun.org"
-SENDER_PASSWORD = "ad155d0e936077ee73e7cd95545bbc58-063062da-05d502df"
+SENDER_EMAIL = "p1g1ucn@gmail.com"
+SENDER_PASSWORD = "hidden"
 
 
 def send_email(receiver):
@@ -27,12 +27,25 @@ def send_email(receiver):
         server.sendmail(SENDER_EMAIL, receiver, email)
         print("Email sent successfully to", receiver)
 
+    except smtplib.SMTPServerDisconnected:
+        print(
+            "Failed to connect to the server. Please check your SMTP server settings."
+        )
+
     except Exception as e:
         print(f"An error occurred while sending the email: {e}")
 
     finally:
         # Disconnect from the SMTP server
-        server.quit()
+        if server is not None:
+            try:
+                server.quit()
+            except smtplib.SMTPServerDisconnected:
+                print(
+                    "Failed to disconnect from the server because the connection was already closed."
+                )
+            except Exception as e:
+                print(f"An error occurred while closing the server connection: {e}")
 
 
 def handle_request(client_socket):
