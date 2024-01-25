@@ -8,8 +8,8 @@ PORT = 7913
 # Email configuration
 SMTP_SERVER = "smtp.mailgun.org"
 SMTP_PORT = 587
-SENDER_EMAIL = "postmaster@sandbox9fc5740a653944b3a9b59254e197d737.mailgun.org"
-SENDER_PASSWORD = "hidden"
+SENDER_EMAIL = "vandspild@sandbox9fc5740a653944b3a9b59254e197d737.mailgun.org"
+SENDER_PASSWORD = "ad155d0e936077ee73e7cd95545bbc58-063062da-05d502df"
 
 
 def send_email(receiver):
