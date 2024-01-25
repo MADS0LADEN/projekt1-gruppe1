@@ -13,10 +13,6 @@ def send_tcp_packet(ip, port):
             if data == "q":
                 break
             sock.sendall(data.encode())
-
-            # Receive response
-            response = sock.recv(1024)
-            print("Received:", response.decode())
             sock.close()
 
     except Exception as e:
