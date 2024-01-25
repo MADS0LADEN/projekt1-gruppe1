@@ -6,13 +6,13 @@ HOST = "0.0.0.0"
 PORT = 7913
 
 # Email configuration
-SMTP_SERVER = "smtp.example.com"
+SMTP_SERVER = "smtp.mailgun.org"
 SMTP_PORT = 587
-SENDER_EMAIL = "sender@example.com"
-SENDER_PASSWORD = "password"
+SENDER_EMAIL = "postmaster@sandbox9fc5740a653944b3a9b59254e197d737.mailgun.org"
+SENDER_PASSWORD = "hidden"
 
 
-def send_email(reciever):
+def send_email(receiver):
     server = None
     try:
         # Connect to the SMTP server
@@ -21,11 +21,11 @@ def send_email(reciever):
         server.login(SENDER_EMAIL, SENDER_PASSWORD)
 
         # Compose the email
-        email = "Alarm, der er vandspild."
+        email = "Subject: ALARM\n\nAlarm, der er vandspild."
 
         # Send the email
-        server.sendmail(SENDER_EMAIL, reciever, email)
-        print("Email sent successfully!")
+        server.sendmail(SENDER_EMAIL, receiver, email)
+        print("Email sent successfully to", receiver)
 
     except Exception as e:
         print(f"An error occurred while sending the email: {e}")
@@ -41,8 +41,8 @@ def handle_request(client_socket):
 
     # Process the request
     email = data
-    # send_email(subject, message)
-    print(email)
+    send_email(email)
+    # print(email)
 
     # Close the client socket
     client_socket.close()
