@@ -63,7 +63,7 @@ def start_server():
     while True:
         # Accept a client connection
         client_socket, client_address = server_socket.accept()
-        print(f"Accepted connection from {client_address[0]}:{client_address[1]}")
+        # print(f"Accepted connection from {client_address[0]}:{client_address[1]}")
 
         # Handle the client request
         handle_request(client_socket)
